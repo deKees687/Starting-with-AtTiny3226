@@ -272,10 +272,10 @@ Here we define a macro for a list of source files. At this moment we have only o
 <h2>Compiler option macro</h2>
 <p>
 <pre class="code">
-Options  = -mmcu=$(DeviceType)  # Specify target device type
-Options += -Wall                # All warnings enabled
-Options += -g                   # Include Debug info (Needed for source-code in .lst)
-Options += -O2                  # Optimise level 2
+CppOptions  = -mmcu=$(DeviceType)  # Specify target device type
+CppOptions += -Wall                # All warnings enabled
+CppOptions += -g                   # Include Debug info (Needed for source-code in .lst)
+CppOptions += -O2                  # Optimise level 2
 </pre>
 Then a macro to set all compiler options. Each option on a separate line so we can add some comments. As you can see, each line adds a new option to the macro using the += (concatenation) operator.
 <p>
@@ -292,8 +292,8 @@ Then a macro to set all compiler options. Each option on a separate line so we c
 <p>
 
 <pre class="code">
-Options += -I ~/AvrGcc/Packages/ATtiny_DFP/1.10.348/include
-Options += -B ~/AvrGcc/Packages/ATtiny_DFP/1.10.348/gcc/dev/attiny3226
+CppOptions += -I ~/AvrGcc/Packages/ATtiny_DFP/1.10.348/include
+CppOptions += -B ~/AvrGcc/Packages/ATtiny_DFP/1.10.348/gcc/dev/attiny3226
 </pre>
 Here I add some options to the tinyAVR device packages on my machine. These are not needed if the target device is already integrated in the compiler package.
 <ul>
@@ -318,7 +318,7 @@ This target "All" is the default target for the make utility as it is the first 
 # Generate .elf file from sources
 Objects/$(Project).elf : $(SourceFiles)
 	mkdir -p Objects
-	avr-gcc $(Options) $(SourceFiles)  -o Objects/$(Project).elf
+	avr-gcc $(CppOptions) $(SourceFiles)  -o Objects/$(Project).elf
 </pre>
 Here we define the elf file as target. We place the elf file (and all other generated files) in its own subdirectory (Objects). As you can see, we use the above defined macros to get the list of sourcefiles and the compiler options. Each command-line must start with a &lt;TAB&gt; character in order to be recognised as a command.
 <p>
@@ -371,7 +371,7 @@ Size :
 Use avr-size to extract memory usage from the .elf file.
 <p>
 
-<h2>Write firmware into target device</h2>
+<h2 Id="MakeAvrdude">Write firmware into target device</h2>
 <p>
 <pre class="code">
 # Write firmware into target processor
@@ -446,7 +446,7 @@ Will read the fuse bits from the target controller.
 
 <h1 id="BurnFirmware">Download the hex file into the chip</h1>
 <p>
-The make-file above uses avrdude to write firmware into the target device. Here I will show what hardware is required to make that work.
+The <a href="#MakeAvrdude">make-file</a> above uses avrdude to write firmware into the target device. Here I will show what hardware is required to make that work.
 <ul>
 <li>avrdude utility. This may come with your avr-gcc installation. If not, you may <a href="https://github.com/avrdudes/avrdude/">download Avrdude from github</a>.
 <li><a href="https://www.nongnu.org/avrdude/user-manual/avrdude.html">Here you may find the Avrdude user manual.</a>
@@ -641,7 +641,8 @@ So this example takes 12 bytes in data space (SRAM) and 12 bytes in program spac
 <dl><dt>On a legacy AVR</dt>
     <dd>On a legacy AVR, adding const makes no big difference. The buffer is still allocated in dataspace, and initialised during startup. This is necessary because that is the only way to make the data accessible for the program. User program can change the data simply by using a cast to remove const, and then changing the contents of the buffer. This statement still results in 12 bytes in data space and 12 bytes in program space.</dd>
     <dt>On a tinyAVR-2</dt>
-    <dd> But on a tinyAVR-2, this is no longer required. The entire string is moved into program space and becomes visible in the high-memory region in dataspace. Changing of the data will require special procedures as the string is now located in flash.
+    <dd> But on a tinyAVR-2, this is no longer required. The entire string is moved into program space and becomes visible in the high-memory region in dataspace. Changing of the data will require special procedures as the string is now located in flash.<p>
+    The compiler will generate the correct address for the string in the upper section of data space so that the application can use the data directly, without using pgm_read...() functions.
     </dd>
 <p>
 
